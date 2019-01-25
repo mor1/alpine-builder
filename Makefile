@@ -1,14 +1,17 @@
+DC=docker-compose run --rm app sh
+
 abuild:
-	docker-compose run --rm app sh -c \
-	  "cd /home/builder/aports/$(PKG) && abuild -r"
+	$(DC) -c "cd /home/builder/aports/$(PKG) && abuild -r"
+
+dev:
+	$(DC) -c "cd /home/builder/aports/$(PKG) && abuild -K deps && sh -i"
 
 build:
 	mkdir -p .cache/ .distfiles/ packages/
 	docker-compose build
 
 checksum:
-	docker-compose run --rm app sh -c \
-	  "cd /home/builder/aports/$(PKG) && abuild checksum"
+	$(DC) -c "cd /home/builder/aports/$(PKG) && abuild checksum"
 
 clean:
 	rm -rf packages/*
@@ -17,7 +20,18 @@ clean-all: clean
 	rm -rf .cache/* .distfiles/*
 
 shell:
-	docker-compose run --rm app sh
+	$(DC)
 
 update:
-	docker-compose run --rm app apk update
+	$(DC) -c "apk update"
+
+PKGNAME ?= NAME
+PKGDESC ?= DESCRIPTION
+PKGLIC  ?= LICENSE
+PKGURL  ?= URL
+PKGSRC  ?= SOURCE
+
+new:
+	$(DC) -c "cd /home/builder/aports/testing \
+	  && newapkbuild -n $(PKGNAME) -d \"$(PKGDESC)\" -l $(PKGLIC) \
+		   -u $(PKGURL) $(PKGSRC)"
